@@ -115,6 +115,22 @@ jobs:
           echo "Service did not stabilize within 15 minutes."
           exit 1
 
+      - name: Wait for ALB target healthy
+        run: |
+          echo "Waiting for ALB target to become healthy (max 5 min)..."
+          for i in $(seq 1 20); do
+            STATE=$(aws elbv2 describe-target-health \
+              --target-group-arn ${{ secrets.TARGET_GROUP_ARN }} \
+              --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`] | length(@)' \
+              --output text)
+            echo "Attempt $i/20 — healthy targets: $STATE"
+            if [ "$STATE" -ge "1" ] 2>/dev/null; then
+              echo "ALB target is healthy."
+              break
+            fi
+            sleep 15
+          done
+
       - name: Smoke test
         run: |
           ALB_DNS=$(aws elbv2 describe-load-balancers \
@@ -122,7 +138,7 @@ jobs:
             --query 'LoadBalancers[0].DNSName' \
             --output text)
           echo "Testing http://$ALB_DNS/health"
-          for i in {1..5}; do
+          for i in {1..10}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$ALB_DNS/health")
             if [ "$STATUS" = "200" ]; then
               echo "Health check passed (HTTP $STATUS)"
@@ -131,5 +147,5 @@ jobs:
             echo "Attempt $i: HTTP $STATUS — retrying in 15s..."
             sleep 15
           done
-          echo "Health check failed after 5 attempts"
+          echo "Health check failed after 10 attempts"
           exit 1
