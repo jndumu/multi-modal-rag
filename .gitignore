@@ -58,7 +58,7 @@ output.txt
 
 # ── Project-specific scratch files ───────────────────────────────────────────
 CLAUDE.md
-uv.lock
+# uv.lock is committed so CI can reproduce exact dependency versions
 docling_report.pdf
 pp_doclayout_v3_glm_ocr_implementation_plan.md
 
