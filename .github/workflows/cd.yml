@@ -52,12 +52,42 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Force new deployment
+      - name: Register task definition
+        id: register-task-def
         run: |
-          aws ecs update-service \
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://app-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "task_def_arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+      - name: Create or update ECS service
+        run: |
+          SERVICE_STATUS=$(aws ecs describe-services \
             --cluster ${{ secrets.ECS_CLUSTER }} \
-            --service ${{ secrets.ECS_SERVICE_APP }} \
-            --force-new-deployment
+            --services ${{ secrets.ECS_SERVICE_APP }} \
+            --query 'services[0].status' \
+            --output text 2>/dev/null || echo "MISSING")
+
+          if [ "$SERVICE_STATUS" = "ACTIVE" ]; then
+            echo "Service exists — forcing new deployment..."
+            aws ecs update-service \
+              --cluster ${{ secrets.ECS_CLUSTER }} \
+              --service ${{ secrets.ECS_SERVICE_APP }} \
+              --task-definition ${{ steps.register-task-def.outputs.task_def_arn }} \
+              --force-new-deployment
+          else
+            echo "Service not found — creating..."
+            aws ecs create-service \
+              --cluster ${{ secrets.ECS_CLUSTER }} \
+              --service-name ${{ secrets.ECS_SERVICE_APP }} \
+              --task-definition ${{ steps.register-task-def.outputs.task_def_arn }} \
+              --desired-count 1 \
+              --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.SUBNET_IDS }}],securityGroups=[${{ secrets.SECURITY_GROUP_IDS }}],assignPublicIp=ENABLED}" \
+              --load-balancers "targetGroupArn=${{ secrets.TARGET_GROUP_ARN }},containerName=app,containerPort=8000" \
+              --health-check-grace-period-seconds 120
+          fi
 
       - name: Wait for service stable
         run: |
