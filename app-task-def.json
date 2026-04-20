@@ -4,16 +4,16 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "2048",
   "memory": "16384",
-  "executionRoleArn": "arn:aws:iam::431445718054:role/doc-parser-ecs-task-execution",
-  "taskRoleArn": "arn:aws:iam::431445718054:role/doc-parser-ecs-task-execution",
+  "executionRoleArn": "arn:aws:iam::431445718054:role/doc-parser-admin-ecs-task-execution",
+  "taskRoleArn": "arn:aws:iam::431445718054:role/doc-parser-admin-ecs-task-execution",
   "volumes": [
     {
       "name": "qdrant-data",
       "efsVolumeConfiguration": {
-        "fileSystemId": "fs-07dd96f49f761930a",
+        "fileSystemId": "fs-014e64c31341e0b01",
         "transitEncryption": "ENABLED",
         "authorizationConfig": {
-          "accessPointId": "fsap-0fd09fef7ea61b9af",
+          "accessPointId": "fsap-07dc6c3c58c946d74",
           "iam": "ENABLED"
         }
       }
@@ -21,10 +21,10 @@
     {
       "name": "ollama-models",
       "efsVolumeConfiguration": {
-        "fileSystemId": "fs-07dd96f49f761930a",
+        "fileSystemId": "fs-014e64c31341e0b01",
         "transitEncryption": "ENABLED",
         "authorizationConfig": {
-          "accessPointId": "fsap-05269b1fc12f1428a",
+          "accessPointId": "fsap-0aa3e68920b4c63ea",
           "iam": "ENABLED"
         }
       }
@@ -52,7 +52,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group":         "/ecs/doc-parser-app",
+          "awslogs-group":         "/ecs/doc-parser-app-superadmin",
           "awslogs-region":        "us-east-1",
           "awslogs-stream-prefix": "app"
         }
@@ -65,8 +65,8 @@
         "startPeriod": 60
       },
       "dependsOn": [
-        {"containerName": "qdrant", "condition": "START"},
-        {"containerName": "ollama", "condition": "START"}
+        {"containerName": "qdrant", "condition": "HEALTHY"},
+        {"containerName": "ollama", "condition": "HEALTHY"}
       ]
     },
     {
@@ -84,10 +84,17 @@
       "environment": [
         {"name": "QDRANT__STORAGE__SKIP_FILESYNC_ON_OPEN", "value": "true"}
       ],
+      "healthCheck": {
+        "command":     ["CMD-SHELL", "bash -c 'echo -n > /dev/tcp/localhost/6333' 2>/dev/null || exit 1"],
+        "interval":    15,
+        "timeout":     5,
+        "retries":     3,
+        "startPeriod": 45
+      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group":         "/ecs/doc-parser-app",
+          "awslogs-group":         "/ecs/doc-parser-app-superadmin",
           "awslogs-region":        "us-east-1",
           "awslogs-stream-prefix": "qdrant"
         }
@@ -108,10 +115,17 @@
       "environment": [
         {"name": "OLLAMA_HOST", "value": "0.0.0.0"}
       ],
+      "healthCheck": {
+        "command":     ["CMD-SHELL", "bash -c 'echo -n > /dev/tcp/localhost/11434' 2>/dev/null || exit 1"],
+        "interval":    15,
+        "timeout":     5,
+        "retries":     3,
+        "startPeriod": 60
+      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group":         "/ecs/doc-parser-app",
+          "awslogs-group":         "/ecs/doc-parser-app-superadmin",
           "awslogs-region":        "us-east-1",
           "awslogs-stream-prefix": "ollama"
         }
