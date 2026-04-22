@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-
 # ── Request models ─────────────────────────────────────────────────────────────
 
 
@@ -24,7 +23,9 @@ class SearchRequest(BaseModel):
 class IngestRequest(BaseModel):
     """Request body for POST /ingest (JSON path-based variant)."""
 
-    file_path: str = Field(..., description="Absolute or relative path to the document file (PDF or image).")
+    file_path: str = Field(
+        ..., description="Absolute or relative path to the document file (PDF or image)."
+    )
     collection: str | None = Field(None, description="Override collection name from settings.")
     overwrite: bool = Field(False, description="If True, recreate the collection before ingesting.")
     max_chunk_tokens: int = Field(512, ge=64, le=4096, description="Max tokens per text chunk.")

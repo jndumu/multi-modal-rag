@@ -86,6 +86,56 @@ def _get_surrounding_context(chunks: list[Chunk], idx: int, max_chars: int = 200
 
 # ── Response parsers ──────────────────────────────────────────────────────────
 
+def _parse_table_json_response(raw_ocr: str, json_str: str | None) -> tuple[str, str]:
+    """Parse a JSON table extraction response into (caption, text).
+
+    caption = markdown table if present, else raw_ocr.
+    text = summary if present, else raw_ocr.
+    Falls back to (raw_ocr, raw_ocr) on any parse error or empty fields.
+    """
+    if not json_str:
+        return raw_ocr, raw_ocr
+    try:
+        data = __import__("json").loads(json_str)
+    except Exception:
+        return raw_ocr, raw_ocr
+
+    markdown = data.get("markdown_table", "") or ""
+    summary = data.get("summary", "") or ""
+
+    if not markdown and not summary:
+        return raw_ocr, raw_ocr
+
+    caption = markdown if markdown else raw_ocr
+    text = summary if summary else raw_ocr
+    return caption, text
+
+
+def _validate_table_extraction(raw: str, num_rows: int, num_cols: int, markdown: str) -> bool:
+    """Return True if the markdown table row count is plausible given num_rows.
+
+    Skips validation when markdown is empty or num_rows is 0.
+    Fails if actual markdown data rows are fewer than half or more than double
+    the reported count, to catch serious extraction errors.
+    """
+    if not markdown or num_rows == 0:
+        return True
+
+    data_rows = [
+        line for line in markdown.splitlines()
+        if line.strip().startswith("|") and not set(line.replace("|", "").replace("-", "").replace(" ", "")) == set()
+    ]
+    # exclude separator rows (---|---)
+    data_rows = [r for r in data_rows if not all(c in "-| :" for c in r)]
+    actual = len(data_rows)
+
+    if actual < num_rows * 0.5:
+        return False
+    if actual > num_rows * 2:
+        return False
+    return True
+
+
 def _parse_image_response(text: str) -> tuple[str, str]:
     """Return (short_caption, full_structured_text) from a GPT-4o image response."""
     caption = ""

@@ -55,7 +55,7 @@ def _make_image_candidate() -> dict:
         "text": "A bar chart showing accuracy vs recall.",
         "chunk_id": "doc_img",
         "modality": "image",
-        "image_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "image_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",  # noqa: E501
         "source_file": "paper.pdf",
         "page": 5,
     }
@@ -341,7 +341,7 @@ class TestBGEReranker:
         """BGE reranker should return at most top_n results."""
         from doc_parser.retrieval.reranker import BGEReranker
 
-        settings = _make_settings(backend="bge")
+        _make_settings(backend="bge")
 
         mock_reranker = MagicMock()
         mock_reranker.compute_score.return_value = [0.9, 0.3, 0.7, 0.1, 0.5]
