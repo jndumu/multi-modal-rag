@@ -57,13 +57,7 @@ def test_ingest_request_defaults() -> None:
 
 
 def test_ingest_request_custom() -> None:
-    req = IngestRequest(
-        file_path="/tmp/doc.pdf",
-        collection="my_col",
-        overwrite=True,
-        max_chunk_tokens=256,
-        caption=False,
-    )
+    req = IngestRequest(file_path="/tmp/doc.pdf", collection="my_col", overwrite=True, max_chunk_tokens=256, caption=False)
     assert req.collection == "my_col"
     assert req.overwrite is True
     assert req.max_chunk_tokens == 256

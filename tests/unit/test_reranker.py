@@ -55,7 +55,7 @@ def _make_image_candidate() -> dict:
         "text": "A bar chart showing accuracy vs recall.",
         "chunk_id": "doc_img",
         "modality": "image",
-        "image_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",  # noqa: E501
+        "image_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
         "source_file": "paper.pdf",
         "page": 5,
     }

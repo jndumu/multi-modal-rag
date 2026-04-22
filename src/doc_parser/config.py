@@ -39,12 +39,18 @@ class Settings(BaseSettings):
     qdrant_collection_name: str = "documents"
 
     # Reranker
-    reranker_backend: str = "jina"  # "jina" | "openai" | "bge" | "qwen"
+    reranker_backend: str = "openai"  # "jina" | "openai" | "bge" | "qwen"
     reranker_top_n: int = 5
     jina_api_key: SecretStr | None = None
 
     # Feature flags
     image_caption_enabled: bool = True
+
+    # Captioning tuning
+    table_max_tokens: int = 2000
+    table_max_input_chars: int = 12_000
+    image_max_tokens: int = 800
+    table_use_vision: bool = False
 
     # API server
     api_host: str = "0.0.0.0"

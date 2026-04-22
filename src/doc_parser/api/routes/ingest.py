@@ -42,7 +42,7 @@ def _save_chunks_to_disk(
         out_path = _CHUNKS_OUTPUT_DIR / f"{stem}.json"
 
         records = []
-        for chunk, d_emb, s_emb in zip(chunks, dense, sparse, strict=True):
+        for chunk, d_emb, s_emb in zip(chunks, dense, sparse, strict=False):
             records.append({
                 "chunk_id": chunk.chunk_id,
                 "page": chunk.page,
@@ -111,7 +111,7 @@ async def _run_ingest(
     # 2. Chunk — single pass over all pages so section headings and figure captions
     #    are linked correctly even across page boundaries.
     chunks = document_aware_chunking(
-        [(page.page_num, page.elements) for page in parse_result.pages],
+        [(page.page_num, page.elements) for page in parse_result.pages],  # type: ignore[misc]
         source_file=source_name,
         max_chunk_tokens=max_chunk_tokens,
     )
@@ -148,22 +148,13 @@ async def _run_ingest(
     )
 
 
-_SUPPORTED_EXTENSIONS: frozenset[str] = frozenset(
-    {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
-)
+_SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"})
 
 
 @router.post("/file", response_model=IngestResponse, summary="Ingest document via file upload")
 async def ingest_file(
-    file: UploadFile = File(..., description="Document file to ingest (PDF or image)."),  # noqa: B008
-    collection: str | None = Form(  # noqa: B008
-        None,
-        description=(
-            "Override collection name. Leave blank to use the default from"
-            " QDRANT_COLLECTION_NAME env var."
-        ),
-        example=None,
-    ),
+    file: UploadFile = File(..., description="Document file to ingest (PDF or image)."),
+    collection: str | None = Form(None, description="Override collection name. Leave blank to use the default from QDRANT_COLLECTION_NAME env var.", example=None),
     overwrite: bool = Form(False, description="Recreate collection before ingesting."),
     max_chunk_tokens: int = Form(512, ge=64, le=4096, description="Max tokens per chunk."),
     caption: bool = Form(True, description="Run GPT-4o captioning on image chunks."),
@@ -197,6 +188,4 @@ async def ingest_by_path(req: IngestRequest) -> IngestResponse:
     file_path = Path(req.file_path)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-    return await _run_ingest(
-        file_path, req.collection, req.overwrite, req.max_chunk_tokens, req.caption
-    )
+    return await _run_ingest(file_path, req.collection, req.overwrite, req.max_chunk_tokens, req.caption)

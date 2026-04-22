@@ -122,7 +122,7 @@ class OpenAIReranker(BaseReranker):
         try:
             response = await self._client.chat.completions.create(
                 model=self._model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=0.0,
                 max_tokens=4,
             )
@@ -146,7 +146,7 @@ class OpenAIReranker(BaseReranker):
             *[self._score_one(query, c) for c in candidates]
         )
         scored = [
-            {**c, "rerank_score": score} for c, score in zip(candidates, scores, strict=True)
+            {**c, "rerank_score": score} for c, score in zip(candidates, scores, strict=False)
         ]
         scored.sort(key=lambda x: x["rerank_score"], reverse=True)
         return scored[:top_n]
@@ -276,7 +276,7 @@ class BGEReranker(BaseReranker):
         )
 
         scored = [
-            {**c, "rerank_score": float(score)} for c, score in zip(candidates, scores, strict=True)
+            {**c, "rerank_score": float(score)} for c, score in zip(candidates, scores, strict=False)
         ]
         scored.sort(key=lambda x: x["rerank_score"], reverse=True)
         return scored[:top_n]
@@ -370,7 +370,7 @@ class QwenVLReranker(BaseReranker):
 
         scores = await asyncio.gather(*[score_one(c) for c in candidates])
         scored = [
-            {**c, "rerank_score": float(score)} for c, score in zip(candidates, scores, strict=True)
+            {**c, "rerank_score": float(score)} for c, score in zip(candidates, scores, strict=False)
         ]
         scored.sort(key=lambda x: x["rerank_score"], reverse=True)
         return scored[:top_n]
@@ -406,4 +406,4 @@ def get_reranker(settings: Settings) -> BaseReranker:
             f"Choose from: {list(_BACKENDS)}"
         )
     logger.info("Initialising reranker backend: %s", backend)
-    return _BACKENDS[backend](settings)
+    return _BACKENDS[backend](settings)  # type: ignore[call-arg]

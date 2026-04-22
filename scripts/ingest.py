@@ -73,13 +73,9 @@ def _collect_files(input_path: Path) -> list[Path]:
             sys.exit(1)
         return [input_path]
     if input_path.is_dir():
-        files = sorted(
-            p for p in input_path.rglob("*") if p.suffix.lower() in _SUPPORTED_EXTENSIONS
-        )
+        files = sorted(p for p in input_path.rglob("*") if p.suffix.lower() in _SUPPORTED_EXTENSIONS)
         if not files:
-            console.print(
-                f"[yellow]Warning:[/yellow] No supported document files found in {input_path}"
-            )
+            console.print(f"[yellow]Warning:[/yellow] No supported document files found in {input_path}")
         return files
     console.print(f"[red]Error:[/red] {input_path} does not exist.")
     sys.exit(1)

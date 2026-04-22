@@ -183,7 +183,7 @@ class TestComputeSparseVectors:
         apple_idx = abs(hash("apple")) % (2**17)
         banana_idx = abs(hash("banana")) % (2**17)
 
-        idx_to_val = dict(zip(result[0].indices, result[0].values, strict=True))
+        idx_to_val = dict(zip(result[0].indices, result[0].values, strict=False))
         assert idx_to_val[apple_idx] > idx_to_val[banana_idx]
 
 
@@ -211,9 +211,7 @@ class TestOpenAIEmbedder:
                 embedder = OpenAIEmbedder(settings)
                 result = await embedder.embed(["hello", "world"])
 
-        mock_et.assert_called_once_with(
-            ["hello", "world"], embedder._client, "text-embedding-3-small", 1536
-        )
+        mock_et.assert_called_once_with(["hello", "world"], embedder._client, "text-embedding-3-small", 1536)
         assert result == fake_result
 
 

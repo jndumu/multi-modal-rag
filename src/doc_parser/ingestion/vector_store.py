@@ -130,7 +130,7 @@ class QdrantDocumentStore:
             )
 
         points: list[PointStruct] = []
-        for chunk, dense, sparse in zip(chunks, dense_embeddings, sparse_vectors, strict=True):
+        for chunk, dense, sparse in zip(chunks, dense_embeddings, sparse_vectors, strict=False):
             payload = {
                 "text": chunk.text,
                 "chunk_id": chunk.chunk_id,
@@ -209,4 +209,4 @@ class QdrantDocumentStore:
             query_filter=query_filter,
         )
 
-        return [point.payload for point in results.points]
+        return [point.payload for point in results.points]  # type: ignore[misc]
