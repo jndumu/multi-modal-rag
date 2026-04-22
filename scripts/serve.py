@@ -18,9 +18,18 @@ def main() -> None:
     settings = get_settings()
 
     parser = argparse.ArgumentParser(description="Start the doc-parser RAG API server.")
-    parser.add_argument("--host", default=settings.api_host, help="Bind host (default: %(default)s)")
-    parser.add_argument("--port", type=int, default=settings.api_port, help="Bind port (default: %(default)s)")
-    parser.add_argument("--workers", type=int, default=settings.api_workers, help="Number of worker processes (default: %(default)s)")
+    parser.add_argument(
+        "--host", default=settings.api_host, help="Bind host (default: %(default)s)"
+    )
+    parser.add_argument(
+        "--port", type=int, default=settings.api_port, help="Bind port (default: %(default)s)"
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=settings.api_workers,
+        help="Number of worker processes (default: %(default)s)",
+    )
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development.")
     args = parser.parse_args()
 

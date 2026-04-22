@@ -63,6 +63,27 @@ Use the variable names and terminology from the algorithm itself.\
 """
 
 
+# ── Context helpers ───────────────────────────────────────────────────────────
+
+def _get_surrounding_context(chunks: list[Chunk], idx: int, max_chars: int = 200) -> str:
+    """Return surrounding text from adjacent chunks within 1 page of chunk at idx."""
+    target_page = chunks[idx].page
+    before = ""
+    after = ""
+
+    if idx > 0:
+        prev = chunks[idx - 1]
+        if prev.modality == "text" and abs(prev.page - target_page) <= 1:
+            before = prev.text[:max_chars]
+
+    if idx < len(chunks) - 1:
+        nxt = chunks[idx + 1]
+        if nxt.modality == "text" and abs(nxt.page - target_page) <= 1:
+            after = nxt.text[:max_chars]
+
+    return (before + after).strip()
+
+
 # ── Response parsers ──────────────────────────────────────────────────────────
 
 def _parse_image_response(text: str) -> tuple[str, str]:
