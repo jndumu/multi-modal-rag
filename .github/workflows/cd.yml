@@ -52,6 +52,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Check ALB availability
+        id: alb-check
+        run: |
+          ALB_STATE=$(aws elbv2 describe-load-balancers \
+            --names doc-parser-alb \
+            --query 'LoadBalancers[0].State.Code' \
+            --output text 2>/dev/null || echo "MISSING")
+          echo "alb_state=$ALB_STATE" >> $GITHUB_OUTPUT
+          if [ "$ALB_STATE" != "active" ]; then
+            echo "::warning::ALB not found or not active (state=$ALB_STATE). Skipping deployment — recreate the ALB to resume live deployments."
+          fi
+
       - name: Register task definition
         id: register-task-def
         run: |
@@ -62,6 +74,7 @@ jobs:
           echo "task_def_arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
 
       - name: Create or update ECS service
+        if: steps.alb-check.outputs.alb_state == 'active'
         run: |
           SERVICE_STATUS=$(aws ecs describe-services \
             --cluster ${{ secrets.ECS_CLUSTER }} \
@@ -90,6 +103,7 @@ jobs:
           fi
 
       - name: Wait for service stable
+        if: steps.alb-check.outputs.alb_state == 'active'
         run: |
           echo "Polling ECS service stability (max 15 min)..."
           for i in $(seq 1 60); do
@@ -116,6 +130,7 @@ jobs:
           exit 1
 
       - name: Wait for ALB target healthy
+        if: steps.alb-check.outputs.alb_state == 'active'
         run: |
           echo "Waiting for ALB target to become healthy (max 5 min)..."
           for i in $(seq 1 20); do
@@ -132,6 +147,7 @@ jobs:
           done
 
       - name: Smoke test
+        if: steps.alb-check.outputs.alb_state == 'active'
         run: |
           ALB_DNS=$(aws elbv2 describe-load-balancers \
             --names doc-parser-alb \
